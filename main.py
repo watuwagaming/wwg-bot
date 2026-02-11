@@ -6,7 +6,10 @@ from datetime import datetime, timedelta
 
 import discord
 import pytz
+from dotenv import load_dotenv
 from discord.ext import commands, tasks
+
+load_dotenv()
 
 
 intents = discord.Intents.all()
