@@ -309,6 +309,7 @@ welcome_messages = [
 # --- Game Detection ---
 
 game_notify_cooldown = {}  # {game_name: datetime}
+game_user_ping_cooldown = {}  # {user_id: datetime} - 24h per-user cooldown
 
 # --- Typing Callout ---
 
@@ -815,21 +816,36 @@ async def on_presence_update(before, after):
                     players.append(m)
                     break
 
-        if len(players) >= 2 and random.random() < 0.10:
+        if len(players) >= 2 and random.random() < 0.03:
+            # Filter out players who were pinged in the last 24 hours
+            eligible = [m for m in players if m.id not in game_user_ping_cooldown
+                        or (now - game_user_ping_cooldown[m.id]).total_seconds() >= 86400]
+            # Also check the player who just started
+            if after.id in game_user_ping_cooldown:
+                if (now - game_user_ping_cooldown[after.id]).total_seconds() < 86400:
+                    continue
+
+            if not eligible:
+                continue
+
             msg = (
                 f"\U0001f440 {after.mention} just hopped on **{game_name}** \u2014 "
-                f"{', '.join(m.mention for m in players[:5])} "
-                f"{'are' if len(players) > 1 else 'is'} already on it. Link up?"
+                f"{', '.join(m.mention for m in eligible[:5])} "
+                f"{'are' if len(eligible) > 1 else 'is'} already on it. Link up?"
             )
             ch = client.get_channel(GAMERS_ARENA_CHANNEL_ID)
             if ch:
                 await ch.send(msg)
             game_notify_cooldown[game_name] = now
+            # Record 24h cooldown for all pinged users
+            game_user_ping_cooldown[after.id] = now
+            for m in eligible[:5]:
+                game_user_ping_cooldown[m.id] = now
 
 
 @client.event
 async def on_typing(channel, user, when):
-    """Typing callout -- if someone types for 25+ seconds, call them out."""
+    """Typing callout -- if someone types for 60+ seconds, call them out."""
     if user.bot:
         return
     if not hasattr(channel, "guild") or channel.guild is None:
@@ -844,11 +860,11 @@ async def on_typing(channel, user, when):
         typing_tracker[key] = now
     else:
         elapsed = (now - typing_tracker[key]).total_seconds()
-        if elapsed >= 25 and random.random() < 0.30:
+        if elapsed >= 60 and random.random() < 0.30:
             msg = random.choice(typing_callout_messages).format(user=user.mention)
             await channel.send(msg)
             del typing_tracker[key]
-        elif elapsed > 60:
+        elif elapsed > 120:
             # Stale entry, clear it
             del typing_tracker[key]
 
