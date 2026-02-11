@@ -26,7 +26,7 @@ games = [
 ]
 gamesTimer = 60 * 10  # 10 minutes
 
-GREETINGS_CHANNEL_ID = 750702727566327869
+GREETINGS_CHANNEL_ID = 628278524905521179
 EAT = pytz.timezone("Africa/Nairobi")  # GMT+3
 
 morning_greetings = [
@@ -46,7 +46,7 @@ morning_greetings = [
 
 TROLL_EXCLUDED_CHANNELS = {
     1092088239600451584,  # modmail
-    750702727566327869,   # greetings
+    628278524905521179,   # greetings
 }
 
 message_cache = deque(maxlen=50)
