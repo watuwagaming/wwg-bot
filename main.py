@@ -27,6 +27,8 @@ games = [
 gamesTimer = 60 * 10  # 10 minutes
 
 GREETINGS_CHANNEL_ID = 628278524905521179
+GENERAL_CHANNEL_ID = 750702727566327869
+GAMERS_ARENA_CHANNEL_ID = 1355493926492180632
 EAT = pytz.timezone("Africa/Nairobi")  # GMT+3
 
 morning_greetings = [
@@ -45,8 +47,40 @@ morning_greetings = [
 # --- Troll Config ---
 
 TROLL_EXCLUDED_CHANNELS = {
-    1092088239600451584,  # modmail
+    787194174549393428,
+    716572818262720572,
+    812233686958342145,
+    740807136703021157,
+    1352324423591399505,
     628278524905521179,   # greetings
+    1136556546168471602,
+    745494439455227955,
+    1238490815580471327,
+    1131832842402410618,
+    1092088239600451584,  # modmail
+    1092088977030393977,
+    1238489063485603840,
+    729602427157872752,
+    1095785282575548466,
+    668549913730088970,
+    1355492254869098736,
+    1026342989053829170,
+    1026343418374397956,
+    808056824024268807,
+    1245077589752680550,
+    1353367229453828118,
+    799116876721684542,
+    628279095490379777,
+    1072396997232951376,
+    1463410054223892543,
+    658572685273726997,
+    1124720930665545918,
+    726444462057717770,
+    819785075599474688,
+    1062661844680052806,
+    899175840930205748,
+    846404140711149598,
+    802584507412250674,
 }
 
 message_cache = deque(maxlen=50)
@@ -374,11 +408,10 @@ def is_late_night():
 async def jumpscare_ping(guild):
     """Randomly ping someone with something unhinged."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
-    channel = random.choice(channels)
     msg = random.choice(jumpscare_messages)
     await channel.send(f"{victim.mention} {msg}")
 
@@ -387,26 +420,24 @@ async def this_you(guild):
     """Repost a cached message with 'this you?'"""
     if not message_cache:
         return
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
     author_id, content, _ = random.choice(message_cache)
     member = guild.get_member(author_id)
     if not member:
         return
-    channel = random.choice(channels)
     await channel.send(f"{member.mention} this you?\n> {content}")
 
 
 async def rename_roulette(guild):
     """Give a random online member a funny nickname for 10 minutes."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
     nickname = random.choice(funny_nicknames)
-    channel = random.choice(channels)
     try:
         old_nick = victim.nick
         await victim.edit(nick=nickname)
@@ -421,10 +452,9 @@ async def rename_roulette(guild):
 
 async def vibe_check(guild):
     """Post a vibe check -- a random reactor gets a funny nickname."""
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     msg = await channel.send("**VIBE CHECK** \U0001faf5\nReact to this... if you dare.")
     await msg.add_reaction("\u2705")
 
@@ -455,10 +485,9 @@ async def vibe_check(guild):
 
 async def wrong_channel(guild):
     """Post 'oops wrong channel' then delete it after a minute."""
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     msg = await channel.send(random.choice(wrong_channel_messages))
     await asyncio.sleep(60)
     try:
@@ -470,45 +499,41 @@ async def wrong_channel(guild):
 async def fake_mod_action(guild):
     """Post a fake warning for a random member."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
     reason = random.choice(fake_mod_reasons)
-    channel = random.choice(channels)
     await channel.send(f"\u26a0\ufe0f **WARNING:** {victim.mention} has been warned for **{reason}**.")
 
 
 async def server_drama(guild):
     """Create fake beef between two random members."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if len(members) < 2 or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if len(members) < 2 or not channel:
         return
     a, b = random.sample(members, 2)
     template = random.choice(drama_templates)
-    channel = random.choice(channels)
     await channel.send(template.format(a=a.mention, b=b.mention))
 
 
 async def afk_check(guild):
     """Ping an online member asking if they're alive."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
-    channel = random.choice(channels)
     msg = random.choice(afk_check_messages).format(user=victim.mention)
     await channel.send(msg)
 
 
 async def random_poll(guild):
     """Post an absurd poll."""
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     question, options = random.choice(random_polls)
     number_emojis = ["1\ufe0f\u20e3", "2\ufe0f\u20e3", "3\ufe0f\u20e3", "4\ufe0f\u20e3"]
     text = f"\U0001f4ca **POLL:** {question}\n"
@@ -521,20 +546,18 @@ async def random_poll(guild):
 
 async def motivational_misquote(guild):
     """Post a misattributed inspirational quote."""
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     quote, attribution = random.choice(misquotes)
     await channel.send(f"\U0001f4a1 **Inspirational Quote of the Day**\n\n*{quote}*\n{attribution}")
 
 
 async def fake_announcement(guild):
     """Post something dramatic, edit it to 'jk' after a minute."""
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     msg = await channel.send(random.choice(fake_announcements))
     await asyncio.sleep(60)
     try:
@@ -546,11 +569,10 @@ async def fake_announcement(guild):
 async def conspiracy_theory(guild):
     """Post an unhinged theory about a random member."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
-    channel = random.choice(channels)
     theory = random.choice(conspiracy_templates).format(user=victim.mention)
     await channel.send(f"\U0001f9f5 **THREAD:** {theory}")
 
@@ -558,11 +580,10 @@ async def conspiracy_theory(guild):
 async def hype_man(guild):
     """Randomly shout out a member for no reason."""
     members = get_online_members(guild)
-    channels = get_troll_channels(guild)
-    if not members or not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not members or not channel:
         return
     victim = random.choice(members)
-    channel = random.choice(channels)
     msg = random.choice(hype_messages).format(user=victim.mention)
     await channel.send(msg)
 
@@ -571,10 +592,9 @@ async def friday_hype(guild):
     """Post a Friday hype message (only fires on Fridays)."""
     if datetime.now(EAT).weekday() != 4:
         return
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     await channel.send(random.choice(friday_messages))
 
 
@@ -638,10 +658,9 @@ async def dead_chat_loop():
     silence = (now - last_message_time).total_seconds()
     if silence < 7200:  # 2 hours
         return
-    channels = get_troll_channels(guild)
-    if not channels:
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
         return
-    channel = random.choice(channels)
     if is_late_night():
         msg = random.choice(late_night_messages)
     else:
@@ -709,10 +728,11 @@ async def on_member_join(member):
     """Welcome hazing -- give new members a ridiculous nickname and a fake rule."""
     if member.bot:
         return
-    channels = get_troll_channels(member.guild)
-    if not channels:
+    if random.random() > 0.20:
         return
-    channel = random.choice(channels)
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    if not channel:
+        return
     nickname = random.choice(funny_nicknames)
     rule = random.choice(fake_rules)
     rule_num = random.randint(47, 200)
@@ -720,10 +740,47 @@ async def on_member_join(member):
     try:
         await member.edit(nick=nickname)
     except discord.Forbidden:
-        pass
+        nickname = None
 
     template = random.choice(welcome_messages)
-    await channel.send(template.format(user=member.mention, nick=nickname, num=rule_num, rule=rule))
+    await channel.send(template.format(user=member.mention, nick=nickname or member.display_name, num=rule_num, rule=rule))
+
+    # Revert nickname after random 1 hour to 1 week
+    if nickname:
+        wait_hours = random.uniform(1, 168)  # 1 hour to 7 days
+        await asyncio.sleep(wait_hours * 3600)
+        try:
+            await member.edit(nick=None)
+        except discord.Forbidden:
+            return
+
+        if wait_hours < 6:
+            early_messages = [
+                f"fine {member.mention}, you can have your name back. I was feeling generous today.",
+                f"{member.mention} got lucky. I was gonna keep that name for WAY longer.",
+                f"giving {member.mention} their name back early because I'm in a good mood. Don't get used to it.",
+                f"{member.mention} you're free. That was just a taste of what I can do.",
+                f"releasing {member.mention} from nickname jail early. Good behavior I guess.",
+            ]
+            await channel.send(random.choice(early_messages))
+        elif wait_hours > 120:
+            late_messages = [
+                f"{member.mention} I almost forgot about you. Here's your name back... you earned it.",
+                f"oh right {member.mention} exists. My bad. Name restored I guess.",
+                f"after careful consideration (I forgot), {member.mention} can have their name back.",
+                f"{member.mention} served their full sentence. Welcome back to society.",
+                f"finally freeing {member.mention}. That nickname was growing on me though.",
+                f"{member.mention} has been released from nickname prison. It's been real.",
+            ]
+            await channel.send(random.choice(late_messages))
+        else:
+            normal_messages = [
+                f"{member.mention} alright your time is up. Name's back. You're welcome.",
+                f"restoring {member.mention}'s identity. Try not to get caught again.",
+                f"{member.mention} you survived. Name restored. Don't let it happen again.",
+                f"giving {member.mention} their name back. It was fun while it lasted.",
+            ]
+            await channel.send(random.choice(normal_messages))
 
 
 @client.event
@@ -756,16 +813,16 @@ async def on_presence_update(before, after):
                     players.append(m)
                     break
 
-        if len(players) >= 2:
-            channels = get_troll_channels(after.guild)
-            if not channels:
-                continue
-            channel = random.choice(channels)
-            mentions = ", ".join(m.mention for m in players[:5])
-            await channel.send(
-                f"\U0001f440 {after.mention} just hopped on **{game_name}** \u2014 {mentions} "
+        if len(players) >= 2 and random.random() < 0.10:
+            msg = (
+                f"\U0001f440 {after.mention} just hopped on **{game_name}** \u2014 "
+                f"{', '.join(m.mention for m in players[:5])} "
                 f"{'are' if len(players) > 1 else 'is'} already on it. Link up?"
             )
+            for ch_id in (GENERAL_CHANNEL_ID, GAMERS_ARENA_CHANNEL_ID):
+                ch = client.get_channel(ch_id)
+                if ch:
+                    await ch.send(msg)
             game_notify_cooldown[game_name] = now
 
 
