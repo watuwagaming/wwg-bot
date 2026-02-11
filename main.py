@@ -24,7 +24,7 @@ games = [
     (discord.ActivityType.watching, "Watu wa Gaming on YouTube"),
     (discord.ActivityType.streaming, "https://www.youtube.com/@watuwagaming"),
 ]
-gamesTimer = 60 * 60  # 60 minutes
+gamesTimer = 60 * 10  # 10 minutes
 
 GREETINGS_CHANNEL_ID = 750702727566327869
 EAT = pytz.timezone("Africa/Nairobi")  # GMT+3
@@ -660,6 +660,16 @@ async def before_dead_chat_loop():
 @tasks.loop(seconds=gamesTimer)
 async def rotate_status():
     """Rotate bot's activity status."""
+    # 30% chance to show "Playing with [member]" if anyone is online
+    if client.guilds and random.random() < 0.30:
+        members = get_online_members(client.guilds[0])
+        if members:
+            member = random.choice(members)
+            await client.change_presence(
+                activity=discord.Game(name=f"with {member.display_name}")
+            )
+            return
+
     randomGame = random.choice(games)
     if randomGame[0] == discord.ActivityType.streaming:
         await client.change_presence(
