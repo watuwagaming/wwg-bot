@@ -658,6 +658,8 @@ async def dead_chat_loop():
     silence = (now - last_message_time).total_seconds()
     if silence < 7200:  # 2 hours
         return
+    if random.random() > 0.50:
+        return
     channel = client.get_channel(GENERAL_CHANNEL_ID)
     if not channel:
         return
@@ -935,7 +937,7 @@ async def on_message(message):
         return
 
     # --- Track activity for dead chat reviver ---
-    if message.guild and message.channel.id not in TROLL_EXCLUDED_CHANNELS:
+    if message.guild:
         last_message_time = datetime.now(EAT)
 
     try:
@@ -944,7 +946,7 @@ async def on_message(message):
             said_gn_at = gn_watchlist[message.author.id]
             mins = int((datetime.now(EAT) - said_gn_at).total_seconds() / 60)
             # Only call out if it's been 20 min to 3 hours since they said gn
-            if 20 <= mins <= 180:
+            if 20 <= mins <= 180 and random.random() < 0.50:
                 callout = random.choice(gn_callouts).format(user=message.author.mention, mins=mins)
                 await message.channel.send(callout)
                 del gn_watchlist[message.author.id]
@@ -1066,7 +1068,8 @@ async def on_message(message):
             now = datetime.now(EAT)
             recent_message_times.append(now)
             recent_count = sum(1 for t in recent_message_times if (now - t).total_seconds() < 60)
-            if recent_count >= 15 and (hype_cooldown_until is None or now > hype_cooldown_until):
+            hype_chance = 0.08 if datetime.now(EAT).weekday() in (4, 5, 6) else 0.05
+            if recent_count >= 15 and (hype_cooldown_until is None or now > hype_cooldown_until) and random.random() < hype_chance:
                 await message.channel.send(random.choice(hype_detector_messages))
                 hype_cooldown_until = now + timedelta(minutes=30)
 
