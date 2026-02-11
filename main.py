@@ -821,10 +821,9 @@ async def on_presence_update(before, after):
                 f"{', '.join(m.mention for m in players[:5])} "
                 f"{'are' if len(players) > 1 else 'is'} already on it. Link up?"
             )
-            for ch_id in (GENERAL_CHANNEL_ID, GAMERS_ARENA_CHANNEL_ID):
-                ch = client.get_channel(ch_id)
-                if ch:
-                    await ch.send(msg)
+            ch = client.get_channel(GAMERS_ARENA_CHANNEL_ID)
+            if ch:
+                await ch.send(msg)
             game_notify_cooldown[game_name] = now
 
 
