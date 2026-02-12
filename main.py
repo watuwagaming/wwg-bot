@@ -24,9 +24,19 @@ EXTENSIONS = [
 ]
 
 
+_ready_fired = False
+_dashboard_task = None
+
+
 @shared.client.event
 async def on_ready():
+    global _ready_fired, _dashboard_task
     print("Bot's Ready")
+
+    # on_ready fires on every reconnect — only initialize once
+    if _ready_fired:
+        return
+    _ready_fired = True
 
     # Initialize config (JSON file) and database (SQLite for logs/stats)
     shared.config = BotConfig()
@@ -43,7 +53,7 @@ async def on_ready():
     hyper_config = HyperConfig()
     hyper_config.bind = [f"0.0.0.0:{dashboard_port}"]
     hyper_config.accesslog = None  # suppress access logs
-    asyncio.create_task(serve(app, hyper_config))
+    _dashboard_task = asyncio.create_task(serve(app, hyper_config))
     print(f"Dashboard running on http://0.0.0.0:{dashboard_port}")
 
     # Load all cogs

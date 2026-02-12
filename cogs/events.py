@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import bot as shared
 from helpers import get_excluded_channels, get_online_members, get_channel_by_key
@@ -18,6 +18,36 @@ class Events(commands.Cog):
         self.game_notify_cooldown = {}      # {game_name: datetime}
         self.game_user_ping_cooldown = {}   # {user_id: datetime}
         self.typing_tracker = {}            # {(channel_id, user_id): datetime}
+        self.cleanup_loop.start()
+
+    async def cog_unload(self):
+        self.cleanup_loop.cancel()
+
+    @tasks.loop(hours=1)
+    async def cleanup_loop(self):
+        """Purge expired entries from cooldown dicts to prevent memory leaks."""
+        now = datetime.now(shared.EAT)
+
+        # Clean typing tracker (entries older than stale_sec)
+        stale = shared.config.get("feature.typing_callout.stale_sec", 120) if shared.config else 120
+        stale_keys = [k for k, v in self.typing_tracker.items() if (now - v).total_seconds() > stale]
+        for k in stale_keys:
+            del self.typing_tracker[k]
+
+        # Clean game cooldowns (entries older than their cooldown period)
+        game_cd = shared.config.get("feature.game_detection.game_cooldown_sec", 86400) if shared.config else 86400
+        expired_games = [g for g, t in self.game_notify_cooldown.items() if (now - t).total_seconds() > game_cd * 2]
+        for g in expired_games:
+            del self.game_notify_cooldown[g]
+
+        user_cd = shared.config.get("feature.game_detection.user_cooldown_sec", 86400) if shared.config else 86400
+        expired_users = [u for u, t in self.game_user_ping_cooldown.items() if (now - t).total_seconds() > user_cd * 2]
+        for u in expired_users:
+            del self.game_user_ping_cooldown[u]
+
+    @cleanup_loop.before_loop
+    async def before_cleanup_loop(self):
+        await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

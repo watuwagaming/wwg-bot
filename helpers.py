@@ -35,5 +35,8 @@ def get_channel_by_key(key):
     """Get a Discord channel by config key."""
     channel_id = shared.config.get(key)
     if channel_id:
-        return shared.client.get_channel(int(channel_id))
+        try:
+            return shared.client.get_channel(int(channel_id))
+        except (ValueError, TypeError):
+            return None
     return None

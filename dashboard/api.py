@@ -2,6 +2,7 @@
 
 import time
 
+import discord
 from quart import Blueprint, request, jsonify, current_app
 
 from dashboard.auth import login_required
@@ -30,6 +31,8 @@ async def update_setting(key: str):
         return jsonify({"error": "setting not found"}), 404
 
     data = await request.get_json()
+    if not data:
+        return jsonify({"error": "invalid or missing JSON body"}), 400
     value = data.get("value")
     if value is None:
         return jsonify({"error": "missing 'value'"}), 400
@@ -38,7 +41,10 @@ async def update_setting(key: str):
     vtype = meta["value_type"]
     try:
         if vtype == "bool":
-            value = bool(value)
+            if isinstance(value, str):
+                value = value.lower() in ("true", "1", "yes")
+            else:
+                value = bool(value)
         elif vtype == "int":
             value = int(value)
         elif vtype == "float":
@@ -60,6 +66,8 @@ async def update_setting(key: str):
 async def update_settings_bulk():
     config = current_app.bot_config
     data = await request.get_json()
+    if not data:
+        return jsonify({"error": "invalid or missing JSON body"}), 400
     updates = data.get("updates", [])
     results = []
     for item in updates:
@@ -73,11 +81,16 @@ async def update_settings_bulk():
         vtype = meta["value_type"]
         try:
             if vtype == "bool":
-                value = bool(value)
+                if isinstance(value, str):
+                    value = value.lower() in ("true", "1", "yes")
+                else:
+                    value = bool(value)
             elif vtype == "int":
                 value = int(value)
             elif vtype == "float":
                 value = float(value)
+                if key.endswith(".chance") or key.endswith("_chance"):
+                    value = max(0.0, min(1.0, value))
             elif vtype == "string":
                 value = str(value)
         except (ValueError, TypeError):
@@ -102,9 +115,14 @@ async def get_excluded_channels():
 async def set_excluded_channels():
     config = current_app.bot_config
     data = await request.get_json()
+    if not data:
+        return jsonify({"error": "invalid or missing JSON body"}), 400
     channels = data.get("channels", [])
     # Ensure all are ints
-    channels = [int(c) for c in channels]
+    try:
+        channels = [int(c) for c in channels]
+    except (ValueError, TypeError):
+        return jsonify({"error": "all channel IDs must be numeric"}), 400
     await config.set("channels.excluded", channels)
     return jsonify({"ok": True, "channels": channels})
 
@@ -114,6 +132,8 @@ async def set_excluded_channels():
 async def add_excluded_channel():
     config = current_app.bot_config
     data = await request.get_json()
+    if not data:
+        return jsonify({"error": "invalid or missing JSON body"}), 400
     channel_id = data.get("channel_id")
     if not channel_id:
         return jsonify({"error": "missing channel_id"}), 400
@@ -145,8 +165,11 @@ async def remove_excluded_channel(channel_id: int):
 @login_required
 async def get_troll_logs():
     db = current_app.db
-    page = int(request.args.get("page", 1))
-    limit = min(int(request.args.get("limit", 50)), 200)
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = min(max(1, int(request.args.get("limit", 50))), 200)
+    except (ValueError, TypeError):
+        page, limit = 1, 50
     troll_type = request.args.get("type", "")
     user = request.args.get("user", "")
     offset = (page - 1) * limit
@@ -190,8 +213,11 @@ async def get_troll_logs():
 @login_required
 async def get_activity_logs():
     db = current_app.db
-    page = int(request.args.get("page", 1))
-    limit = min(int(request.args.get("limit", 50)), 200)
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = min(max(1, int(request.args.get("limit", 50))), 200)
+    except (ValueError, TypeError):
+        page, limit = 1, 50
     event_type = request.args.get("type", "")
     offset = (page - 1) * limit
 
@@ -257,7 +283,7 @@ async def get_stats():
     # Trolls by type
     async with db.execute(
         "SELECT troll_type, troll_name, COUNT(*) as cnt FROM troll_log "
-        "GROUP BY troll_type ORDER BY cnt DESC"
+        "GROUP BY troll_type, troll_name ORDER BY cnt DESC"
     ) as cur:
         by_type = [{"type": r[0], "name": r[1], "count": r[2]} for r in await cur.fetchall()]
 
@@ -310,6 +336,6 @@ async def bot_status():
         "uptime_sec": uptime_sec,
         "guild_name": guild.name if guild else None,
         "member_count": guild.member_count if guild else 0,
-        "online_members": sum(1 for m in guild.members if not m.bot and m.status != __import__("discord").Status.offline) if guild else 0,
+        "online_members": sum(1 for m in guild.members if not m.bot and m.status != discord.Status.offline) if guild else 0,
         "latency_ms": round(bot.latency * 1000, 1),
     })

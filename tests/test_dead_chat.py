@@ -35,7 +35,7 @@ class TestDeadChatLoop:
         async def _test():
             cog, channel = setup_cog
             shared.config = make_mock_config({"feature.dead_chat.enabled": False})
-            await cog.dead_chat_loop()
+            await cog._check_dead_chat()
             channel.send.assert_not_called()
         run_async(_test())
 
@@ -43,7 +43,7 @@ class TestDeadChatLoop:
         async def _test():
             cog, channel = setup_cog
             cog.bot.guilds = []
-            await cog.dead_chat_loop()
+            await cog._check_dead_chat()
             channel.send.assert_not_called()
         run_async(_test())
 
@@ -51,7 +51,7 @@ class TestDeadChatLoop:
         async def _test():
             cog, channel = setup_cog
             cog.last_message_time = None
-            await cog.dead_chat_loop()
+            await cog._check_dead_chat()
             channel.send.assert_not_called()
         run_async(_test())
 
@@ -59,7 +59,7 @@ class TestDeadChatLoop:
         async def _test():
             cog, channel = setup_cog
             cog.last_message_time = datetime.now(shared.EAT) - timedelta(minutes=30)
-            await cog.dead_chat_loop()
+            await cog._check_dead_chat()
             channel.send.assert_not_called()
         run_async(_test())
 
@@ -71,7 +71,7 @@ class TestDeadChatLoop:
             with patch("cogs.dead_chat.random") as mock_rand:
                 mock_rand.random.return_value = 0.0  # always trigger
                 mock_rand.choice.side_effect = lambda x: x[0]
-                await cog.dead_chat_loop()
+                await cog._check_dead_chat()
 
             channel.send.assert_called_once()
         run_async(_test())
@@ -85,7 +85,7 @@ class TestDeadChatLoop:
             with patch("cogs.dead_chat.random") as mock_rand:
                 mock_rand.random.return_value = 0.0
                 mock_rand.choice.side_effect = lambda x: x[0]
-                await cog.dead_chat_loop()
+                await cog._check_dead_chat()
 
             assert cog.last_message_time > old_time
         run_async(_test())
@@ -99,7 +99,7 @@ class TestDeadChatLoop:
                 mock_rand.random.return_value = 0.0
                 mock_rand.choice.side_effect = lambda x: x[0]
                 with patch("cogs.dead_chat.is_late_night", return_value=True):
-                    await cog.dead_chat_loop()
+                    await cog._check_dead_chat()
 
             channel.send.assert_called_once()
             # Late night messages come from late_night_messages list
@@ -116,7 +116,7 @@ class TestDeadChatLoop:
                 mock_rand.random.return_value = 0.0
                 mock_rand.choice.side_effect = lambda x: x[0]
                 with patch("cogs.dead_chat.is_late_night", return_value=False):
-                    await cog.dead_chat_loop()
+                    await cog._check_dead_chat()
 
             from messages import hot_takes
             assert channel.send.call_args[0][0] == hot_takes[0]
@@ -129,7 +129,7 @@ class TestDeadChatLoop:
 
             with patch("cogs.dead_chat.random") as mock_rand:
                 mock_rand.random.return_value = 1.0  # never trigger
-                await cog.dead_chat_loop()
+                await cog._check_dead_chat()
 
             channel.send.assert_not_called()
         run_async(_test())

@@ -286,3 +286,76 @@ friday_messages = [
     "TGIF! Who's running games tonight? \U0001f3c6",
     "Friday vibes only. If you're not gaming tonight what are you even doing?",
 ]
+
+# --- Rage Detector ---
+
+rage_responses = [
+    "bro breathe. it's just a game.",
+    "I can feel the anger through the screen \U0001f480",
+    "somebody get this person some water",
+    "controller status: in danger",
+    "the caps lock is doing a lot of heavy lifting rn",
+    "deep breaths. in through the nose. out through the mouth.",
+    "this is a certified rage moment",
+    "I think {user} needs a break \U0001f62d",
+    "calm down before you break something",
+    "bro is HEATED. someone check on them.",
+]
+
+# --- Excuse Generator ---
+
+excuse_responses = [
+    "nah it was definitely lag",
+    "your controller was broken obviously",
+    "the sun was in your eyes. through the ceiling. it happens.",
+    "you were just warming up. the real game starts next round.",
+    "I blame the matchmaking tbh",
+    "the other team was clearly cheating. I ran the numbers.",
+    "your teammate sold you. not your fault.",
+    "that game doesn't count. I'm deleting it from the records.",
+    "you weren't even trying. we all know that.",
+    "it was rigged from the start honestly",
+]
+
+# --- Cap Alarm ---
+
+cap_responses = [
+    "\U0001f9e2\U0001f9e2\U0001f9e2",
+    "cap detected \U0001f6a8",
+    "the cap alarm is going off rn",
+    "idk bro that sounds like cap to me",
+    "my cap detector is going CRAZY right now",
+    "source: trust me bro",
+    "interesting... the lie detector determined that was cap",
+    "you said 'trust me' so now I trust you less",
+    "cap levels are off the charts \U0001f4c8",
+]
+
+# --- Flex Police ---
+
+flex_responses = [
+    "calm down it's not that serious \U0001f612",
+    "bro is flexing in a Discord server \U0001f480",
+    "someone humble this person please",
+    "screenshot this for when they lose next game",
+    "the ego on this one...",
+    "and then you woke up",
+    "bold words for someone in trolling distance",
+    "saved this message for later. you know, for when you lose.",
+    "ok champ. we'll see about that.",
+    "this is going on the wall of shame if you lose tonight",
+]
+
+# --- Lag Defender ---
+
+lag_responses = [
+    "IT WAS DEFINITELY LAG. I believe you.",
+    "100% lag. No way that was a skill issue. Absolutely not.",
+    "I checked the servers and yeah it was lagging. Trust me.",
+    "lag is undefeated honestly",
+    "they need to fix these servers fr fr",
+    "I SAW the lag. You would've won if it wasn't for the lag.",
+    "the lag was crazy just now ngl",
+    "lag diff. nothing else to say.",
+    "bro was about to go crazy but the lag said no \U0001f480",
+]

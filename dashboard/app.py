@@ -11,7 +11,11 @@ from dashboard.api import api_bp
 
 def create_app(config, db, bot_client):
     app = Quart(__name__, template_folder="templates")
-    app.secret_key = os.getenv("DASHBOARD_SECRET", os.urandom(32).hex())
+    secret = os.getenv("DASHBOARD_SECRET")
+    if not secret:
+        print("[dashboard] WARNING: DASHBOARD_SECRET not set — sessions will reset on restart")
+        secret = os.urandom(32).hex()
+    app.secret_key = secret
     app.permanent_session_lifetime = timedelta(days=7)
 
     # Make config, db, and bot accessible to API routes

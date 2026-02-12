@@ -96,7 +96,10 @@ class BackgroundTrolls(commands.Cog):
 
         await asyncio.sleep(60)
 
-        msg = await channel.fetch_message(msg.id)
+        try:
+            msg = await channel.fetch_message(msg.id)
+        except (discord.NotFound, discord.HTTPException):
+            return
         reactors = []
         for reaction in msg.reactions:
             async for user in reaction.users():
@@ -137,7 +140,7 @@ class BackgroundTrolls(commands.Cog):
         await asyncio.sleep(60)
         try:
             await msg.delete()
-        except discord.NotFound:
+        except (discord.NotFound, discord.Forbidden):
             pass
 
     async def fake_mod_action(self, guild):
@@ -231,7 +234,7 @@ class BackgroundTrolls(commands.Cog):
         await asyncio.sleep(60)
         try:
             await msg.edit(content=f"{msg.content}\n\n*jk lol*")
-        except discord.NotFound:
+        except (discord.NotFound, discord.Forbidden):
             pass
 
     async def conspiracy_theory(self, guild):
@@ -322,6 +325,9 @@ class BackgroundTrolls(commands.Cog):
         else:
             min_h = shared.config.get("feature.troll_loop.weekday_min_hours", 1.0)
             max_h = shared.config.get("feature.troll_loop.weekday_max_hours", 4.0)
+        # Clamp to sane range (5 min to 24 hours)
+        min_h = max(5 / 60, min(min_h, 24.0))
+        max_h = max(min_h, min(max_h, 24.0))
         wait_hours = random.uniform(min_h, max_h)
         await asyncio.sleep(wait_hours * 3600)
 

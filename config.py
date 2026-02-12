@@ -177,10 +177,13 @@ class BotConfig:
         defaults = {key: value for key, value, *_ in DEFAULT_SETTINGS}
 
         if self._path.exists():
-            with open(self._path, "r") as f:
-                saved = json.load(f)
-            # Merge: saved values override defaults
-            defaults.update(saved)
+            try:
+                with open(self._path, "r") as f:
+                    saved = json.load(f)
+                # Merge: saved values override defaults
+                defaults.update(saved)
+            except (json.JSONDecodeError, OSError) as e:
+                print(f"[config] WARNING: Failed to load config.json ({e}), using defaults")
 
         self._data = defaults
         # Write back so any new default keys are persisted
@@ -188,8 +191,11 @@ class BotConfig:
 
     def _save(self):
         """Write current config to JSON file."""
-        with open(self._path, "w") as f:
-            json.dump(self._data, f, indent=2)
+        try:
+            with open(self._path, "w") as f:
+                json.dump(self._data, f, indent=2)
+        except OSError as e:
+            print(f"[config] Failed to save config: {e}")
 
     def get(self, key: str, default=None):
         """Fast in-memory read."""

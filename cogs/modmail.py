@@ -50,7 +50,11 @@ class Modmail(commands.Cog):
 
         # --- Staff reply: Reply to an embed in the modmail channel to DM the user ---
         modmail_id = shared.config.get("channels.modmail_id", "")
-        if modmail_id and message.channel.id == int(modmail_id) and message.reference:
+        try:
+            is_modmail_channel = modmail_id and message.channel.id == int(modmail_id)
+        except (ValueError, TypeError):
+            is_modmail_channel = False
+        if is_modmail_channel and message.reference:
             try:
                 ref_msg = await message.channel.fetch_message(message.reference.message_id)
             except discord.NotFound:
@@ -58,12 +62,23 @@ class Modmail(commands.Cog):
 
             if not ref_msg.embeds:
                 return
-            footer_text = ref_msg.embeds[0].footer.text or ""
+            footer = ref_msg.embeds[0].footer
+            footer_text = (footer.text if footer else None) or ""
             if not footer_text.startswith("User ID: "):
                 return
 
-            user_id = int(footer_text.replace("User ID: ", ""))
-            target_user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+            try:
+                user_id = int(footer_text.replace("User ID: ", ""))
+            except ValueError:
+                return
+
+            try:
+                target_user = self.bot.get_user(user_id) or await self.bot.fetch_user(user_id)
+            except discord.NotFound:
+                await message.channel.send("Could not find that user \u2014 they may have left Discord.")
+                return
+            except discord.HTTPException:
+                return
 
             try:
                 if message.content:

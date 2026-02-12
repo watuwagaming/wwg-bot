@@ -1,5 +1,6 @@
 """Simple password-based session auth for the dashboard."""
 
+import hmac
 import os
 from functools import wraps
 
@@ -26,7 +27,7 @@ async def login():
     if not expected:
         return jsonify({"error": "DASHBOARD_PASSWORD not set in .env"}), 500
 
-    if password == expected:
+    if hmac.compare_digest(password, expected):
         session["authenticated"] = True
         session.permanent = True
         return jsonify({"ok": True})

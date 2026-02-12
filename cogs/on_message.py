@@ -2,6 +2,7 @@
 
 import asyncio
 import random
+import traceback
 from collections import deque
 from datetime import datetime, timedelta
 
@@ -14,6 +15,8 @@ from messages import (
     gn_phrases, gn_callouts, hype_detector_messages,
     cursed_emojis, fake_typing_messages, take_judgements,
     essay_responses, k_responses, late_night_messages,
+    rage_responses, excuse_responses, cap_responses,
+    flex_responses, lag_responses,
 )
 
 
@@ -24,6 +27,15 @@ class OnMessage(commands.Cog):
         self.recent_message_times = deque(maxlen=200)
         self.hype_cooldown_until = None
 
+    def _cleanup_gn_watchlist(self):
+        """Remove expired GN watchlist entries."""
+        max_mins = shared.config.get("feature.gn_police.max_minutes", 180) if shared.config else 180
+        now = datetime.now(shared.EAT)
+        expired = [uid for uid, t in self.gn_watchlist.items()
+                   if (now - t).total_seconds() / 60 > max_mins]
+        for uid in expired:
+            del self.gn_watchlist[uid]
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
@@ -33,8 +45,11 @@ class OnMessage(commands.Cog):
         if isinstance(message.channel, discord.DMChannel):
             return
         modmail_id = shared.config.get("channels.modmail_id", "")
-        if modmail_id and message.channel.id == int(modmail_id) and message.reference:
-            return
+        try:
+            if modmail_id and message.channel.id == int(modmail_id) and message.reference:
+                return
+        except (ValueError, TypeError):
+            pass
 
         # --- Track activity for dead chat reviver ---
         if message.guild:
@@ -49,6 +64,10 @@ class OnMessage(commands.Cog):
             pass
 
         excluded = get_excluded_channels()
+
+        # Periodically clean up GN watchlist (every ~100 messages)
+        if random.random() < 0.01:
+            self._cleanup_gn_watchlist()
 
         try:
             # --- GN Police: check if sender previously said goodnight ---
@@ -90,18 +109,6 @@ class OnMessage(commands.Cog):
                 is_caps_rage = len(content) >= min_len and sum(1 for c in content if c.isupper()) / max(len(content.replace(" ", "")), 1) > caps_thresh
                 is_exclaim_rage = content.count("!") >= exclaim_thresh
                 if (is_caps_rage or is_exclaim_rage) and random.random() < rage_chance:
-                    rage_responses = [
-                        "bro breathe. it's just a game.",
-                        "I can feel the anger through the screen \U0001f480",
-                        "somebody get this person some water",
-                        "controller status: in danger",
-                        "the caps lock is doing a lot of heavy lifting rn",
-                        "deep breaths. in through the nose. out through the mouth.",
-                        "this is a certified rage moment",
-                        "I think {user} needs a break \U0001f62d",
-                        "calm down before you break something",
-                        "bro is HEATED. someone check on them.",
-                    ]
                     resp = random.choice(rage_responses).format(user=message.author.mention)
                     await message.reply(resp, mention_author=False)
                     keyword_triggered = True
@@ -118,18 +125,6 @@ class OnMessage(commands.Cog):
                 loss_phrases = ["i lost", "we lost", "took an l", "got destroyed", "got clapped", "got wrecked", "got bodied", "lost the game"]
                 excuse_chance = shared.config.get("feature.excuse_generator.chance", 0.40)
                 if any(phrase in lower for phrase in loss_phrases) and random.random() < excuse_chance:
-                    excuse_responses = [
-                        "nah it was definitely lag",
-                        "your controller was broken obviously",
-                        "the sun was in your eyes. through the ceiling. it happens.",
-                        "you were just warming up. the real game starts next round.",
-                        "I blame the matchmaking tbh",
-                        "the other team was clearly cheating. I ran the numbers.",
-                        "your teammate sold you. not your fault.",
-                        "that game doesn't count. I'm deleting it from the records.",
-                        "you weren't even trying. we all know that.",
-                        "it was rigged from the start honestly",
-                    ]
                     await message.reply(random.choice(excuse_responses), mention_author=False)
                     keyword_triggered = True
                     try:
@@ -145,17 +140,6 @@ class OnMessage(commands.Cog):
                 cap_phrases = ["i swear", "no cap", "trust me", "on my life", "on god", "deadass", "fr fr", "i promise", "not lying"]
                 cap_chance = shared.config.get("feature.cap_alarm.chance", 0.35)
                 if any(phrase in lower for phrase in cap_phrases) and random.random() < cap_chance:
-                    cap_responses = [
-                        "\U0001f9e2\U0001f9e2\U0001f9e2",
-                        "cap detected \U0001f6a8",
-                        "the cap alarm is going off rn",
-                        "idk bro that sounds like cap to me",
-                        "my cap detector is going CRAZY right now",
-                        "source: trust me bro",
-                        "interesting... the lie detector determined that was cap",
-                        "you said 'trust me' so now I trust you less",
-                        "cap levels are off the charts \U0001f4c8",
-                    ]
                     await message.reply(random.choice(cap_responses), mention_author=False)
                     keyword_triggered = True
                     try:
@@ -171,18 +155,6 @@ class OnMessage(commands.Cog):
                 flex_phrases = ["i'm the best", "im the best", "easy win", "easy dub", "too easy", "i carried", "they can't beat me", "i'm goated", "im goated", "undefeated", "no one can", "i don't lose", "i dont lose"]
                 flex_chance = shared.config.get("feature.flex_police.chance", 0.40)
                 if any(phrase in lower for phrase in flex_phrases) and random.random() < flex_chance:
-                    flex_responses = [
-                        "calm down it's not that serious \U0001f612",
-                        "bro is flexing in a Discord server \U0001f480",
-                        "someone humble this person please",
-                        "screenshot this for when they lose next game",
-                        "the ego on this one...",
-                        "and then you woke up",
-                        "bold words for someone in trolling distance",
-                        "saved this message for later. you know, for when you lose.",
-                        "ok champ. we'll see about that.",
-                        "this is going on the wall of shame if you lose tonight",
-                    ]
                     await message.reply(random.choice(flex_responses), mention_author=False)
                     keyword_triggered = True
                     try:
@@ -197,17 +169,6 @@ class OnMessage(commands.Cog):
                 lower = message.content.lower()
                 lag_chance = shared.config.get("feature.lag_defender.chance", 0.40)
                 if "lag" in lower.split() and random.random() < lag_chance:
-                    lag_responses = [
-                        "IT WAS DEFINITELY LAG. I believe you.",
-                        "100% lag. No way that was a skill issue. Absolutely not.",
-                        "I checked the servers and yeah it was lagging. Trust me.",
-                        "lag is undefeated honestly",
-                        "they need to fix these servers fr fr",
-                        "I SAW the lag. You would've won if it wasn't for the lag.",
-                        "the lag was crazy just now ngl",
-                        "lag diff. nothing else to say.",
-                        "bro was about to go crazy but the lag said no \U0001f480",
-                    ]
                     await message.reply(random.choice(lag_responses), mention_author=False)
                     keyword_triggered = True
                     try:
@@ -216,7 +177,7 @@ class OnMessage(commands.Cog):
                     except Exception:
                         pass
 
-            # --- Hype Detector ---
+            # --- Hype Detector (only count non-excluded channels) ---
             if shared.config.get("feature.hype_detector.enabled", True) and message.guild and message.channel.id not in excluded:
                 now = datetime.now(shared.EAT)
                 self.recent_message_times.append(now)
@@ -280,59 +241,62 @@ class OnMessage(commands.Cog):
                         if random.random() < troll_chance:
                             troll_type = random.randint(1, 13)
 
-                            if troll_type == 1:
-                                await message.add_reaction("\U0001f1f1")  # Random L
+                            try:
+                                if troll_type == 1:
+                                    await message.add_reaction("\U0001f1f1")  # Random L
 
-                            elif troll_type == 2:
-                                await message.add_reaction("\U0001f480")  # Skull react
+                                elif troll_type == 2:
+                                    await message.add_reaction("\U0001f480")  # Skull react
 
-                            elif troll_type == 3:
-                                combo = random.choice(cursed_emojis)  # Emoji roulette
-                                for emoji in combo:
-                                    await message.add_reaction(emoji)
+                                elif troll_type == 3:
+                                    combo = random.choice(cursed_emojis)  # Emoji roulette
+                                    for emoji in combo:
+                                        await message.add_reaction(emoji)
 
-                            elif troll_type == 4:
-                                # Slow clap
-                                clap_emojis = ["\U0001f44f", "\U0001f44f\U0001f3fb", "\U0001f44f\U0001f3fc", "\U0001f44f\U0001f3fd", "\U0001f44f\U0001f3fe", "\U0001f44f\U0001f3ff"]
-                                count = random.randint(3, 5)
-                                for emoji in clap_emojis[:count]:
-                                    await message.add_reaction(emoji)
-                                    await asyncio.sleep(2)
+                                elif troll_type == 4:
+                                    # Slow clap
+                                    clap_emojis = ["\U0001f44f", "\U0001f44f\U0001f3fb", "\U0001f44f\U0001f3fc", "\U0001f44f\U0001f3fd", "\U0001f44f\U0001f3fe", "\U0001f44f\U0001f3ff"]
+                                    count = random.randint(3, 5)
+                                    for emoji in clap_emojis[:count]:
+                                        await message.add_reaction(emoji)
+                                        await asyncio.sleep(2)
 
-                            elif troll_type == 5:
-                                # Fake typing
-                                async with message.channel.typing():
-                                    await asyncio.sleep(random.randint(3, 8))
-                                reply = random.choice(fake_typing_messages)
-                                if reply:
-                                    await message.channel.send(reply)
+                                elif troll_type == 5:
+                                    # Fake typing
+                                    async with message.channel.typing():
+                                        await asyncio.sleep(random.randint(3, 8))
+                                    reply = random.choice(fake_typing_messages)
+                                    if reply:
+                                        await message.channel.send(reply)
 
-                            elif troll_type == 6:
-                                await message.reply("?", mention_author=False)
+                                elif troll_type == 6:
+                                    await message.reply("?", mention_author=False)
 
-                            elif troll_type == 7:
-                                await message.reply("nobody asked", mention_author=False)
+                                elif troll_type == 7:
+                                    await message.reply("nobody asked", mention_author=False)
 
-                            elif troll_type == 8:
-                                await message.add_reaction("\U0001f9e2")  # Cap
+                                elif troll_type == 8:
+                                    await message.add_reaction("\U0001f9e2")  # Cap
 
-                            elif troll_type == 9:
-                                await message.add_reaction("\U0001f4ee")  # Sus
+                                elif troll_type == 9:
+                                    await message.add_reaction("\U0001f4ee")  # Sus
 
-                            elif troll_type == 10:
-                                await message.add_reaction("\U0001f44e")  # Disagree
+                                elif troll_type == 10:
+                                    await message.add_reaction("\U0001f44e")  # Disagree
 
-                            elif troll_type == 11:
-                                await message.add_reaction("\U0001f440")  # Read receipt
+                                elif troll_type == 11:
+                                    await message.add_reaction("\U0001f440")  # Read receipt
 
-                            elif troll_type == 12:
-                                # Countdown -- 3, 2, 1... nothing
-                                for emoji in ["3\ufe0f\u20e3", "2\ufe0f\u20e3", "1\ufe0f\u20e3"]:
-                                    await message.add_reaction(emoji)
-                                    await asyncio.sleep(2)
+                                elif troll_type == 12:
+                                    # Countdown -- 3, 2, 1... nothing
+                                    for emoji in ["3\ufe0f\u20e3", "2\ufe0f\u20e3", "1\ufe0f\u20e3"]:
+                                        await message.add_reaction(emoji)
+                                        await asyncio.sleep(2)
 
-                            elif troll_type == 13:
-                                await message.reply(random.choice(take_judgements), mention_author=False)  # L/W take
+                                elif troll_type == 13:
+                                    await message.reply(random.choice(take_judgements), mention_author=False)  # L/W take
+                            except discord.HTTPException:
+                                pass  # Rate limited or message deleted
 
                             try:
                                 troll_names = {
@@ -357,8 +321,9 @@ class OnMessage(commands.Cog):
                         except Exception:
                             pass
 
-        except Exception:
-            pass  # Never let troll errors break command processing
+        except Exception as e:
+            print(f"[on_message] Troll error: {e}")
+            traceback.print_exc()
 
 
 async def setup(bot):
