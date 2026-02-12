@@ -27,13 +27,13 @@ DEFAULT_SETTINGS = [
     ("feature.dead_chat.enabled", True, "bool", "Dead Chat Reviver", "Enable dead chat reviver"),
     ("feature.dead_chat.check_interval_min", 30, "int", "Dead Chat Reviver", "Check interval in minutes"),
     ("feature.dead_chat.silence_threshold_sec", 7200, "int", "Dead Chat Reviver", "Silence threshold in seconds"),
-    ("feature.dead_chat.chance", 0.50, "float", "Dead Chat Reviver", "Chance to revive (0-1)"),
+    ("feature.dead_chat.chance", 0.05, "float", "Dead Chat Reviver", "Chance to revive (0-1)"),
     ("feature.dead_chat.channel_id", "750702727566327869", "string", "Dead Chat Reviver", "Channel for dead chat revival"),
 
     # Status Rotation
     ("feature.status_rotation.enabled", True, "bool", "Status Rotation", "Enable status rotation"),
     ("feature.status_rotation.interval_sec", 600, "int", "Status Rotation", "Interval between rotations in seconds"),
-    ("feature.status_rotation.member_mention_chance", 0.30, "float", "Status Rotation", "Chance to show 'Playing with [member]'"),
+    ("feature.status_rotation.member_mention_chance", 0.10, "float", "Status Rotation", "Chance to show 'Playing with [member]'"),
 
     # Game Detection
     ("feature.game_detection.enabled", True, "bool", "Game Detection", "Enable game detection pings"),
@@ -46,7 +46,7 @@ DEFAULT_SETTINGS = [
     # Typing Callout
     ("feature.typing_callout.enabled", True, "bool", "Typing Callout", "Enable typing callout"),
     ("feature.typing_callout.duration_sec", 60, "int", "Typing Callout", "Seconds of typing before callout"),
-    ("feature.typing_callout.chance", 0.30, "float", "Typing Callout", "Chance to call out (0-1)"),
+    ("feature.typing_callout.chance", 0.10, "float", "Typing Callout", "Chance to call out (0-1)"),
     ("feature.typing_callout.stale_sec", 120, "int", "Typing Callout", "Seconds before tracker entry goes stale"),
 
     # Reaction Chain
@@ -57,7 +57,7 @@ DEFAULT_SETTINGS = [
     ("feature.gn_police.enabled", True, "bool", "GN Police", "Enable goodnight police"),
     ("feature.gn_police.min_minutes", 20, "int", "GN Police", "Min minutes after GN to call out"),
     ("feature.gn_police.max_minutes", 180, "int", "GN Police", "Max minutes after GN to call out"),
-    ("feature.gn_police.chance", 0.50, "float", "GN Police", "Chance to call out (0-1)"),
+    ("feature.gn_police.chance", 0.10, "float", "GN Police", "Chance to call out (0-1)"),
 
     # Hype Detector
     ("feature.hype_detector.enabled", True, "bool", "Hype Detector", "Enable hype detector"),
@@ -65,7 +65,7 @@ DEFAULT_SETTINGS = [
     ("feature.hype_detector.time_window_sec", 60, "int", "Hype Detector", "Time window in seconds"),
     ("feature.hype_detector.cooldown_min", 30, "int", "Hype Detector", "Cooldown in minutes after triggering"),
     ("feature.hype_detector.weekday_chance", 0.05, "float", "Hype Detector", "Chance on weekdays (0-1)"),
-    ("feature.hype_detector.weekend_chance", 0.08, "float", "Hype Detector", "Chance on weekends (0-1)"),
+    ("feature.hype_detector.weekend_chance", 0.05, "float", "Hype Detector", "Chance on weekends (0-1)"),
 
     # Late Night Mode
     ("feature.late_night.enabled", True, "bool", "Late Night Mode", "Enable late night bonus trolls"),
@@ -75,7 +75,7 @@ DEFAULT_SETTINGS = [
 
     # Welcome Hazing
     ("feature.welcome_hazing.enabled", True, "bool", "Welcome Hazing", "Enable welcome hazing"),
-    ("feature.welcome_hazing.chance", 0.20, "float", "Welcome Hazing", "Chance to haze new member (0-1)"),
+    ("feature.welcome_hazing.chance", 0.10, "float", "Welcome Hazing", "Chance to haze new member (0-1)"),
     ("feature.welcome_hazing.nick_revert_min_hours", 1.0, "float", "Welcome Hazing", "Min hours before reverting nickname"),
     ("feature.welcome_hazing.nick_revert_max_hours", 168.0, "float", "Welcome Hazing", "Max hours before reverting nickname"),
 
@@ -84,32 +84,32 @@ DEFAULT_SETTINGS = [
     ("feature.rage_detector.caps_threshold", 0.70, "float", "Rage Detector", "Caps ratio to detect rage (0-1)"),
     ("feature.rage_detector.min_length", 10, "int", "Rage Detector", "Min message length for caps check"),
     ("feature.rage_detector.exclaim_threshold", 3, "int", "Rage Detector", "Exclamation marks to detect rage"),
-    ("feature.rage_detector.chance", 0.35, "float", "Rage Detector", "Chance to respond (0-1)"),
+    ("feature.rage_detector.chance", 0.10, "float", "Rage Detector", "Chance to respond (0-1)"),
 
     # Excuse Generator
     ("feature.excuse_generator.enabled", True, "bool", "Excuse Generator", "Enable excuse generator"),
-    ("feature.excuse_generator.chance", 0.40, "float", "Excuse Generator", "Chance to respond (0-1)"),
+    ("feature.excuse_generator.chance", 0.10, "float", "Excuse Generator", "Chance to respond (0-1)"),
 
     # Cap Alarm
     ("feature.cap_alarm.enabled", True, "bool", "Cap Alarm", "Enable cap alarm"),
-    ("feature.cap_alarm.chance", 0.35, "float", "Cap Alarm", "Chance to respond (0-1)"),
+    ("feature.cap_alarm.chance", 0.10, "float", "Cap Alarm", "Chance to respond (0-1)"),
 
     # Flex Police
     ("feature.flex_police.enabled", True, "bool", "Flex Police", "Enable flex police"),
-    ("feature.flex_police.chance", 0.40, "float", "Flex Police", "Chance to respond (0-1)"),
+    ("feature.flex_police.chance", 0.10, "float", "Flex Police", "Chance to respond (0-1)"),
 
     # Lag Defender
     ("feature.lag_defender.enabled", True, "bool", "Lag Defender", "Enable lag defender"),
-    ("feature.lag_defender.chance", 0.40, "float", "Lag Defender", "Chance to respond (0-1)"),
+    ("feature.lag_defender.chance", 0.10, "float", "Lag Defender", "Chance to respond (0-1)"),
 
     # Essay Detector
     ("feature.essay_detector.enabled", True, "bool", "Essay Detector", "Enable essay detector"),
     ("feature.essay_detector.threshold_chars", 500, "int", "Essay Detector", "Min characters to trigger"),
-    ("feature.essay_detector.chance", 0.30, "float", "Essay Detector", "Chance to respond (0-1)"),
+    ("feature.essay_detector.chance", 0.10, "float", "Essay Detector", "Chance to respond (0-1)"),
 
     # K Energy
     ("feature.k_energy.enabled", True, "bool", "K Energy", "Enable K energy detector"),
-    ("feature.k_energy.chance", 0.30, "float", "K Energy", "Chance to respond (0-1)"),
+    ("feature.k_energy.chance", 0.10, "float", "K Energy", "Chance to respond (0-1)"),
 
     # Per-Message Trolls
     ("feature.per_message_trolls.enabled", True, "bool", "Per-Message Trolls", "Enable per-message troll reactions"),
