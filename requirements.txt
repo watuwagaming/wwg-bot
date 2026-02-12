@@ -1,3 +1,8 @@
 discord.py
 pytz
 python-dotenv
+quart
+aiosqlite
+hypercorn
+pytest
+pytest-asyncio

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WWG Bot Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+  .sidebar-link { transition: all 0.15s; }
+  .sidebar-link:hover, .sidebar-link.active { background: #1e293b; color: #38bdf8; }
+  .card { background: #1e293b; border-radius: 0.75rem; border: 1px solid #334155; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #475569; border-radius: 24px; transition: 0.2s; }
+  .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  input:checked + .toggle-slider { background: #22c55e; }
+  input:checked + .toggle-slider:before { transform: translateX(20px); }
+  .save-flash { animation: flash 1.5s ease-out; }
+  @keyframes flash { 0% { color: #22c55e; } 100% { color: #94a3b8; } }
+  .bar-chart-bar { transition: width 0.5s ease; }
+  input[type="number"], input[type="text"] { background: #0f172a; border: 1px solid #475569; border-radius: 0.375rem; padding: 0.375rem 0.5rem; color: #e2e8f0; width: 100%; }
+  input[type="number"]:focus, input[type="text"]:focus { outline: none; border-color: #38bdf8; }
+  select { background: #0f172a; border: 1px solid #475569; border-radius: 0.375rem; padding: 0.375rem 0.5rem; color: #e2e8f0; }
+  .table-row:hover { background: #1e293b; }
+  .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Login Screen -->
+<div id="login-screen" class="hidden min-h-screen flex items-center justify-center">
+  <div class="card p-8 w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-center mb-6">WWG Bot Dashboard</h1>
+    <div id="login-error" class="hidden text-red-400 text-sm text-center mb-4"></div>
+    <input type="password" id="login-password" placeholder="Password" class="w-full mb-4 p-3 bg-slate-900 border border-slate-600 rounded-lg text-white" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Log In</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" class="hidden">
+  <!-- Top bar -->
+  <header class="fixed top-0 left-0 right-0 h-14 bg-slate-900 border-b border-slate-700 flex items-center px-4 z-50">
+    <h1 class="text-lg font-bold text-blue-400 mr-auto">WWG Bot</h1>
+    <span id="bot-status-badge" class="badge bg-green-900 text-green-300 mr-3">Online</span>
+    <span id="bot-latency" class="text-xs text-slate-400 mr-4"></span>
+    <button onclick="doLogout()" class="text-sm text-slate-400 hover:text-white transition">Logout</button>
+  </header>
+
+  <div class="flex pt-14">
+    <!-- Sidebar -->
+    <nav class="fixed left-0 top-14 bottom-0 w-48 bg-slate-900 border-r border-slate-700 overflow-y-auto">
+      <div class="py-4 space-y-1">
+        <a href="#overview" onclick="nav('overview')" class="sidebar-link block px-4 py-2 text-sm" data-page="overview">Overview</a>
+        <a href="#features" onclick="nav('features')" class="sidebar-link block px-4 py-2 text-sm" data-page="features">Features</a>
+        <a href="#channels" onclick="nav('channels')" class="sidebar-link block px-4 py-2 text-sm" data-page="channels">Channels</a>
+        <a href="#trolllog" onclick="nav('trolllog')" class="sidebar-link block px-4 py-2 text-sm" data-page="trolllog">Troll Log</a>
+        <a href="#activity" onclick="nav('activity')" class="sidebar-link block px-4 py-2 text-sm" data-page="activity">Activity Log</a>
+        <a href="#stats" onclick="nav('stats')" class="sidebar-link block px-4 py-2 text-sm" data-page="stats">Stats</a>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="ml-48 flex-1 p-6 min-h-screen">
+      <!-- Overview -->
+      <section id="page-overview" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="card p-4"><div class="text-sm text-slate-400">Uptime</div><div id="stat-uptime" class="text-2xl font-bold mt-1">-</div></div>
+          <div class="card p-4"><div class="text-sm text-slate-400">Members Online</div><div id="stat-online" class="text-2xl font-bold mt-1">-</div></div>
+          <div class="card p-4"><div class="text-sm text-slate-400">Trolls Triggered</div><div id="stat-trolls" class="text-2xl font-bold text-orange-400 mt-1">-</div></div>
+          <div class="card p-4"><div class="text-sm text-slate-400">Messages Processed</div><div id="stat-messages" class="text-2xl font-bold text-blue-400 mt-1">-</div></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="text-sm font-semibold text-slate-400 mb-3">Recent Activity</h3>
+          <div id="recent-activity" class="space-y-2 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="page-features" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Features</h2>
+        <div id="features-container" class="space-y-4"></div>
+      </section>
+
+      <!-- Channels -->
+      <section id="page-channels" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Channels</h2>
+        <div id="channel-ids" class="card p-4 mb-4 space-y-3"></div>
+        <div class="card p-4">
+          <h3 class="text-sm font-semibold text-slate-400 mb-3">Excluded Channels</h3>
+          <div id="excluded-channels" class="space-y-2 mb-3"></div>
+          <div class="flex gap-2">
+            <input type="text" id="new-excluded-id" placeholder="Channel ID" class="flex-1">
+            <button onclick="addExcluded()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm transition">Add</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Troll Log -->
+      <section id="page-trolllog" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Troll Log</h2>
+        <div class="flex gap-3 mb-4">
+          <select id="troll-type-filter" onchange="loadTrollLogs(1)" class="text-sm"><option value="">All Types</option></select>
+          <input type="text" id="troll-user-filter" placeholder="Filter by user..." class="text-sm w-48" onkeydown="if(event.key==='Enter')loadTrollLogs(1)">
+        </div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-slate-700 text-left text-slate-400">
+              <th class="p-3">Time</th><th class="p-3">Type</th><th class="p-3">Target</th><th class="p-3">Channel</th><th class="p-3">Details</th>
+            </tr></thead>
+            <tbody id="troll-log-body"></tbody>
+          </table>
+        </div>
+        <div id="troll-log-pagination" class="flex justify-between items-center mt-3 text-sm"></div>
+      </section>
+
+      <!-- Activity Log -->
+      <section id="page-activity" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Activity Log</h2>
+        <div class="flex gap-3 mb-4">
+          <select id="activity-type-filter" onchange="loadActivityLogs(1)" class="text-sm"><option value="">All Types</option></select>
+        </div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-slate-700 text-left text-slate-400">
+              <th class="p-3">Time</th><th class="p-3">Event</th><th class="p-3">Description</th><th class="p-3">Channel</th><th class="p-3">User</th>
+            </tr></thead>
+            <tbody id="activity-log-body"></tbody>
+          </table>
+        </div>
+        <div id="activity-log-pagination" class="flex justify-between items-center mt-3 text-sm"></div>
+      </section>
+
+      <!-- Stats -->
+      <section id="page-stats" class="page hidden">
+        <h2 class="text-xl font-bold mb-4">Stats</h2>
+        <div id="stat-counters" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="card p-4">
+            <h3 class="text-sm font-semibold text-slate-400 mb-3">Trolls by Type</h3>
+            <div id="trolls-by-type" class="space-y-2"></div>
+          </div>
+          <div class="card p-4">
+            <h3 class="text-sm font-semibold text-slate-400 mb-3">Most Trolled Users</h3>
+            <div id="top-targets" class="space-y-2"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────
+let currentPage = 'overview';
+let settings = {};
+let trollLogPage = 1;
+let activityLogPage = 1;
+
+// ── API helpers ───────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const data = await res.json();
+  if (res.status === 401 && !path.includes('/api/me')) {
+    showLogin();
+    throw new Error('unauthorized');
+  }
+  return { status: res.status, data };
+}
+
+// ── Auth ──────────────────────────────────────
+async function checkAuth() {
+  try {
+    const { status } = await api('/api/me');
+    if (status === 200) { showApp(); return; }
+  } catch {}
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  nav(window.location.hash.slice(1) || 'overview');
+  loadBotStatus();
+  setInterval(loadBotStatus, 30000);
+}
+
+async function doLogin() {
+  const pw = document.getElementById('login-password').value;
+  const { status, data } = await api('/api/login', {
+    method: 'POST', body: JSON.stringify({ password: pw })
+  });
+  if (status === 200) { showApp(); }
+  else {
+    const el = document.getElementById('login-error');
+    el.textContent = data.error || 'Login failed';
+    el.classList.remove('hidden');
+  }
+}
+
+async function doLogout() {
+  await api('/api/logout', { method: 'POST' });
+  showLogin();
+}
+
+// ── Navigation ────────────────────────────────
+function nav(page) {
+  currentPage = page || 'overview';
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + currentPage);
+  if (pageEl) pageEl.classList.remove('hidden');
+  const linkEl = document.querySelector(`[data-page="${currentPage}"]`);
+  if (linkEl) linkEl.classList.add('active');
+
+  if (currentPage === 'overview') loadOverview();
+  if (currentPage === 'features') loadFeatures();
+  if (currentPage === 'channels') loadChannels();
+  if (currentPage === 'trolllog') { loadTrollTypes(); loadTrollLogs(1); }
+  if (currentPage === 'activity') { loadActivityTypes(); loadActivityLogs(1); }
+  if (currentPage === 'stats') loadStats();
+}
+
+// ── Bot Status ────────────────────────────────
+async function loadBotStatus() {
+  try {
+    const { data } = await api('/api/bot/status');
+    document.getElementById('bot-status-badge').textContent = data.online ? 'Online' : 'Offline';
+    document.getElementById('bot-status-badge').className = 'badge ' + (data.online ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300');
+    document.getElementById('bot-latency').textContent = data.latency_ms + 'ms';
+  } catch {}
+}
+
+// ── Overview ──────────────────────────────────
+async function loadOverview() {
+  try {
+    const [{ data: status }, { data: stats }, { data: activityData }] = await Promise.all([
+      api('/api/bot/status'),
+      api('/api/stats'),
+      api('/api/logs/activity?limit=10'),
+    ]);
+    document.getElementById('stat-uptime').textContent = status.uptime;
+    document.getElementById('stat-online').textContent = status.online_members + ' / ' + status.member_count;
+    document.getElementById('stat-trolls').textContent = (stats.counters.trolls_triggered || 0).toLocaleString();
+    document.getElementById('stat-messages').textContent = (stats.counters.messages_processed || 0).toLocaleString();
+
+    const recentEl = document.getElementById('recent-activity');
+    if (!activityData.logs.length) {
+      recentEl.innerHTML = '<div class="text-slate-500">No activity yet</div>';
+    } else {
+      recentEl.innerHTML = activityData.logs.map(l =>
+        `<div class="flex justify-between items-center py-1 border-b border-slate-700/50">
+          <div><span class="badge bg-slate-700 text-slate-300 mr-2">${l.event_type}</span>${escHtml(l.description)}</div>
+          <div class="text-slate-500 text-xs whitespace-nowrap ml-4">${fmtTime(l.timestamp)}</div>
+        </div>`
+      ).join('');
+    }
+  } catch {}
+}
+
+// ── Features ──────────────────────────────────
+async function loadFeatures() {
+  const { data } = await api('/api/settings');
+  settings = data;
+  const container = document.getElementById('features-container');
+  let html = '';
+
+  for (const [category, items] of Object.entries(data)) {
+    const enabledItem = items.find(i => i.key.endsWith('.enabled'));
+    const otherItems = items.filter(i => !i.key.endsWith('.enabled'));
+
+    html += `<div class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold">${escHtml(category)}</h3>
+        ${enabledItem ? makeToggle(enabledItem.key, enabledItem.value) : ''}
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${otherItems.map(item => makeInput(item)).join('')}
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function makeToggle(key, value) {
+  return `<label class="toggle-switch">
+    <input type="checkbox" ${value ? 'checked' : ''} onchange="saveSetting('${key}', this.checked)">
+    <span class="toggle-slider"></span>
+  </label>`;
+}
+
+function makeInput(item) {
+  const { key, value, value_type, description } = item;
+  let input = '';
+  if (value_type === 'bool') {
+    input = makeToggle(key, value);
+  } else if (value_type === 'float') {
+    input = `<input type="number" step="0.01" value="${value}" onchange="saveSetting('${key}', parseFloat(this.value))" class="w-32">`;
+  } else if (value_type === 'int') {
+    input = `<input type="number" step="1" value="${value}" onchange="saveSetting('${key}', parseInt(this.value))" class="w-32">`;
+  } else if (value_type === 'string') {
+    input = `<input type="text" value="${escAttr(String(value))}" onchange="saveSetting('${key}', this.value)" class="w-48">`;
+  } else if (value_type === 'json') {
+    return ''; // Handled in channels page
+  }
+  return `<div class="flex items-center justify-between gap-2">
+    <div>
+      <div class="text-sm">${escHtml(description)}</div>
+      <div class="text-xs text-slate-500">${key}</div>
+    </div>
+    <div class="flex items-center gap-2">
+      ${input}
+      <span class="text-xs text-slate-500 save-indicator" id="save-${key.replace(/\./g, '-')}"></span>
+    </div>
+  </div>`;
+}
+
+let saveTimers = {};
+async function saveSetting(key, value) {
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(async () => {
+    await api(`/api/settings/${key}`, {
+      method: 'PUT', body: JSON.stringify({ value })
+    });
+    const indicator = document.getElementById('save-' + key.replace(/\./g, '-'));
+    if (indicator) {
+      indicator.textContent = 'Saved';
+      indicator.classList.add('save-flash');
+      setTimeout(() => { indicator.textContent = ''; indicator.classList.remove('save-flash'); }, 1500);
+    }
+  }, 300);
+}
+
+// ── Channels ──────────────────────────────────
+async function loadChannels() {
+  const { data } = await api('/api/settings');
+  const channelItems = (data['Channels'] || []).filter(i => i.value_type === 'string');
+  const idsEl = document.getElementById('channel-ids');
+  idsEl.innerHTML = channelItems.map(item =>
+    `<div class="flex items-center justify-between">
+      <div class="text-sm">${escHtml(item.description)}<div class="text-xs text-slate-500">${item.key}</div></div>
+      <input type="text" value="${escAttr(String(item.value))}" onchange="saveSetting('${item.key}', this.value)" class="w-48">
+    </div>`
+  ).join('');
+
+  const { data: excData } = await api('/api/channels/excluded');
+  renderExcluded(excData.channels);
+}
+
+function renderExcluded(channels) {
+  const el = document.getElementById('excluded-channels');
+  if (!channels.length) { el.innerHTML = '<div class="text-slate-500 text-sm">None</div>'; return; }
+  el.innerHTML = channels.map(c =>
+    `<div class="flex items-center justify-between py-1 border-b border-slate-700/50">
+      <code class="text-sm">${c}</code>
+      <button onclick="removeExcluded(${c})" class="text-red-400 hover:text-red-300 text-xs">Remove</button>
+    </div>`
+  ).join('');
+}
+
+async function addExcluded() {
+  const input = document.getElementById('new-excluded-id');
+  const val = input.value.trim();
+  if (!val) return;
+  const { data } = await api('/api/channels/excluded/add', {
+    method: 'POST', body: JSON.stringify({ channel_id: val })
+  });
+  input.value = '';
+  renderExcluded(data.channels);
+}
+
+async function removeExcluded(id) {
+  const { data } = await api(`/api/channels/excluded/${id}`, { method: 'DELETE' });
+  renderExcluded(data.channels);
+}
+
+// ── Troll Log ─────────────────────────────────
+async function loadTrollTypes() {
+  const { data } = await api('/api/logs/trolls/types');
+  const sel = document.getElementById('troll-type-filter');
+  sel.innerHTML = '<option value="">All Types</option>' + data.types.map(t =>
+    `<option value="${escAttr(t)}">${escHtml(t)}</option>`
+  ).join('');
+}
+
+async function loadTrollLogs(page) {
+  trollLogPage = page;
+  const type = document.getElementById('troll-type-filter').value;
+  const user = document.getElementById('troll-user-filter').value;
+  let url = `/api/logs/trolls?page=${page}&limit=50`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (user) url += `&user=${encodeURIComponent(user)}`;
+  const { data } = await api(url);
+
+  const tbody = document.getElementById('troll-log-body');
+  if (!data.logs.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No troll logs yet</td></tr>';
+  } else {
+    tbody.innerHTML = data.logs.map(l =>
+      `<tr class="table-row border-b border-slate-700/50">
+        <td class="p-3 text-xs whitespace-nowrap">${fmtTime(l.timestamp)}</td>
+        <td class="p-3"><span class="badge bg-orange-900 text-orange-300">${escHtml(l.troll_name)}</span></td>
+        <td class="p-3">${escHtml(l.target_user_name || '-')}</td>
+        <td class="p-3 text-slate-400">${escHtml(l.channel_name || '-')}</td>
+        <td class="p-3 text-xs text-slate-400 max-w-xs truncate">${escHtml(l.details || '')}</td>
+      </tr>`
+    ).join('');
+  }
+
+  const totalPages = Math.ceil(data.total / data.limit) || 1;
+  document.getElementById('troll-log-pagination').innerHTML =
+    `<span class="text-slate-400">${data.total} entries</span>
+     <div class="flex gap-2">
+       <button onclick="loadTrollLogs(${Math.max(1, page-1)})" class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 ${page<=1?'opacity-50':''}">Prev</button>
+       <span class="px-2 py-1">${page} / ${totalPages}</span>
+       <button onclick="loadTrollLogs(${Math.min(totalPages, page+1)})" class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 ${page>=totalPages?'opacity-50':''}">Next</button>
+     </div>`;
+}
+
+// ── Activity Log ──────────────────────────────
+async function loadActivityTypes() {
+  const { data } = await api('/api/logs/activity/types');
+  const sel = document.getElementById('activity-type-filter');
+  sel.innerHTML = '<option value="">All Types</option>' + data.types.map(t =>
+    `<option value="${escAttr(t)}">${escHtml(t)}</option>`
+  ).join('');
+}
+
+async function loadActivityLogs(page) {
+  activityLogPage = page;
+  const type = document.getElementById('activity-type-filter').value;
+  let url = `/api/logs/activity?page=${page}&limit=50`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  const { data } = await api(url);
+
+  const tbody = document.getElementById('activity-log-body');
+  if (!data.logs.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No activity yet</td></tr>';
+  } else {
+    tbody.innerHTML = data.logs.map(l =>
+      `<tr class="table-row border-b border-slate-700/50">
+        <td class="p-3 text-xs whitespace-nowrap">${fmtTime(l.timestamp)}</td>
+        <td class="p-3"><span class="badge bg-blue-900 text-blue-300">${escHtml(l.event_type)}</span></td>
+        <td class="p-3">${escHtml(l.description)}</td>
+        <td class="p-3 text-slate-400">${escHtml(l.channel_name || '-')}</td>
+        <td class="p-3 text-slate-400">${escHtml(l.user_name || '-')}</td>
+      </tr>`
+    ).join('');
+  }
+
+  const totalPages = Math.ceil(data.total / data.limit) || 1;
+  document.getElementById('activity-log-pagination').innerHTML =
+    `<span class="text-slate-400">${data.total} entries</span>
+     <div class="flex gap-2">
+       <button onclick="loadActivityLogs(${Math.max(1, page-1)})" class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 ${page<=1?'opacity-50':''}">Prev</button>
+       <span class="px-2 py-1">${page} / ${totalPages}</span>
+       <button onclick="loadActivityLogs(${Math.min(totalPages, page+1)})" class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 ${page>=totalPages?'opacity-50':''}">Next</button>
+     </div>`;
+}
+
+// ── Stats ─────────────────────────────────────
+async function loadStats() {
+  const { data } = await api('/api/stats');
+
+  // Counter cards
+  const counters = data.counters || {};
+  const counterNames = {
+    trolls_triggered: 'Trolls Triggered', messages_processed: 'Messages Processed',
+    greetings_sent: 'Greetings Sent', dead_chat_revives: 'Dead Chat Revives',
+    gn_callouts: 'GN Callouts', welcomes_sent: 'Welcomes Sent',
+    game_detections: 'Game Detections', typing_callouts: 'Typing Callouts',
+    rage_detections: 'Rage Detections', excuse_generations: 'Excuse Gens',
+    cap_alarms: 'Cap Alarms', flex_polices: 'Flex Polices',
+    lag_defenses: 'Lag Defenses', essay_detections: 'Essay Detections',
+    k_energy_fires: 'K Energy', late_night_bonuses: 'Late Night',
+    per_message_trolls: 'Msg Trolls', reaction_chains: 'Reaction Chains',
+    hype_detections: 'Hype Detects', modmail_received: 'Modmail In',
+    modmail_replied: 'Modmail Out', trolls_bg_triggered: 'BG Trolls',
+  };
+  document.getElementById('stat-counters').innerHTML = Object.entries(counterNames).map(([k, label]) =>
+    `<div class="card p-3"><div class="text-xs text-slate-400">${label}</div><div class="text-xl font-bold mt-1">${(counters[k] || 0).toLocaleString()}</div></div>`
+  ).join('');
+
+  // Trolls by type
+  const byType = data.trolls_by_type || [];
+  const maxCount = byType.length ? byType[0].count : 1;
+  document.getElementById('trolls-by-type').innerHTML = byType.length ? byType.map(t =>
+    `<div class="flex items-center gap-2">
+      <div class="w-32 text-xs text-slate-300 truncate">${escHtml(t.name)}</div>
+      <div class="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden">
+        <div class="bg-orange-500 h-full bar-chart-bar rounded-full" style="width:${(t.count/maxCount*100).toFixed(1)}%"></div>
+      </div>
+      <div class="text-xs text-slate-400 w-8 text-right">${t.count}</div>
+    </div>`
+  ).join('') : '<div class="text-slate-500 text-sm">No data yet</div>';
+
+  // Top targets
+  const targets = data.top_targets || [];
+  document.getElementById('top-targets').innerHTML = targets.length ? targets.map((t, i) =>
+    `<div class="flex items-center justify-between py-1">
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500 w-4">${i+1}.</span>
+        <span class="text-sm">${escHtml(t.name)}</span>
+      </div>
+      <span class="badge bg-red-900 text-red-300">${t.count}</span>
+    </div>`
+  ).join('') : '<div class="text-slate-500 text-sm">No data yet</div>';
+}
+
+// ── Helpers ───────────────────────────────────
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function fmtTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Init ──────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>
