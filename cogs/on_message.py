@@ -204,7 +204,11 @@ class OnMessage(commands.Cog):
                 cache_chance = shared.config.get("feature.message_cache.chance", 0.10)
                 if message.content and len(message.content) > 10 and random.random() < cache_chance:
                     if bg_trolls_cog:
-                        bg_trolls_cog.message_cache.append((message.author.id, message.content, message.channel.id))
+                        # Cap per-user entries to prevent one active user dominating the cache
+                        max_per_user = 5
+                        user_count = sum(1 for uid, _, _ in bg_trolls_cog.message_cache if uid == message.author.id)
+                        if user_count < max_per_user:
+                            bg_trolls_cog.message_cache.append((message.author.id, message.content, message.channel.id))
 
                 # Essay detector
                 troll_fired = False

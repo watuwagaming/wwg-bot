@@ -1,5 +1,6 @@
 """Utility functions shared across cogs."""
 
+import random
 from datetime import datetime
 
 import discord
@@ -21,6 +22,17 @@ def get_troll_channels(guild):
 def get_online_members(guild):
     """Get non-bot online members."""
     return [m for m in guild.members if not m.bot and m.status != discord.Status.offline]
+
+
+def pick_member(members, recent_victim_ids):
+    """Pick a random member, preferring those not recently targeted.
+
+    Falls back to pure random if all members are in the recent list.
+    """
+    if not members:
+        return None
+    fresh = [m for m in members if m.id not in recent_victim_ids]
+    return random.choice(fresh) if fresh else random.choice(members)
 
 
 def is_late_night():

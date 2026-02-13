@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands, tasks
 
 import bot as shared
-from helpers import get_online_members, get_channel_by_key
+from helpers import get_online_members, get_channel_by_key, pick_member
 from messages import (
     jumpscare_messages, funny_nicknames, wrong_channel_messages,
     fake_mod_reasons, drama_templates, conspiracy_templates,
@@ -22,6 +22,7 @@ class BackgroundTrolls(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.message_cache = deque(maxlen=50)
+        self.recent_victims = deque(maxlen=5)  # track last 5 victim IDs
         self.troll_loop.start()
 
     async def cog_unload(self):
@@ -35,7 +36,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         msg = random.choice(jumpscare_messages)
         await channel.send(f"{victim.mention} {msg}")
         try:
@@ -51,10 +53,14 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not channel:
             return
-        author_id, content, _ = random.choice(self.message_cache)
+        # Prefer cached messages from users not recently targeted
+        fresh = [entry for entry in self.message_cache if entry[0] not in self.recent_victims]
+        pool = fresh if fresh else list(self.message_cache)
+        author_id, content, _ = random.choice(pool)
         member = guild.get_member(author_id)
         if not member:
             return
+        self.recent_victims.append(member.id)
         await channel.send(f"{member.mention} this you?\n> {content}")
         try:
             await shared.logger.log_troll("this_you", "This You?", target_user=member, channel=channel, details={"quoted": content[:100]})
@@ -68,7 +74,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         nickname = random.choice(funny_nicknames)
         try:
             old_nick = victim.nick
@@ -149,7 +156,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         reason = random.choice(fake_mod_reasons)
         await channel.send(f"\u26a0\ufe0f **WARNING:** {victim.mention} has been warned for **{reason}**.")
         try:
@@ -164,7 +172,11 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if len(members) < 2 or not channel:
             return
-        a, b = random.sample(members, 2)
+        a = pick_member(members, self.recent_victims)
+        self.recent_victims.append(a.id)
+        remaining = [m for m in members if m.id != a.id]
+        b = pick_member(remaining, self.recent_victims) if remaining else random.choice(members)
+        self.recent_victims.append(b.id)
         template = random.choice(drama_templates)
         await channel.send(template.format(a=a.mention, b=b.mention))
         try:
@@ -179,7 +191,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         msg = random.choice(afk_check_messages).format(user=victim.mention)
         await channel.send(msg)
         try:
@@ -243,7 +256,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         theory = random.choice(conspiracy_templates).format(user=victim.mention)
         await channel.send(f"\U0001f9f5 **THREAD:** {theory}")
         try:
@@ -258,7 +272,8 @@ class BackgroundTrolls(commands.Cog):
         channel = get_channel_by_key("channels.general_id")
         if not members or not channel:
             return
-        victim = random.choice(members)
+        victim = pick_member(members, self.recent_victims)
+        self.recent_victims.append(victim.id)
         msg = random.choice(hype_messages).format(user=victim.mention)
         await channel.send(msg)
         try:
