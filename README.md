@@ -84,21 +84,43 @@ Or allow it via the Digital Ocean control panel under **Networking > Firewalls**
 
 ```
 wwg-bot/
-├── main.py              # Bot core — all Discord event handlers and features
+├── main.py              # Entry point — loads cogs and starts the bot + dashboard
+├── bot.py               # Shared bot instance and global references (config, logger)
 ├── config.py            # Config system — reads/writes config.json
 ├── database.py          # SQLite schema for logs and stats
 ├── logger.py            # Logging module for troll and activity tracking
+├── helpers.py           # Utility functions shared across cogs
+├── messages.py          # All message templates, greetings, troll lines, etc.
 ├── requirements.txt     # Python dependencies
+├── pytest.ini           # Pytest configuration
 ├── .env                 # Environment variables (not committed)
 ├── config.json          # Bot settings (auto-generated, not committed)
 ├── bot.db               # SQLite database for logs (auto-generated, not committed)
-└── dashboard/
-    ├── __init__.py
-    ├── app.py           # Quart web app factory
-    ├── auth.py          # Dashboard login/session auth
-    ├── api.py           # REST API endpoints
-    └── templates/
-        └── index.html   # Dashboard frontend (single-page app)
+├── cogs/
+│   ├── background_trolls.py  # Troll loop — periodic background trolls
+│   ├── dead_chat.py          # Dead chat reviver
+│   ├── events.py             # Member join, presence, reaction events
+│   ├── modmail.py            # DM forwarding and staff replies
+│   ├── morning_greeting.py   # Daily morning greeting task
+│   ├── on_message.py         # Per-message features (GN police, hype, rage, etc.)
+│   └── status_rotation.py    # Rotating bot status
+├── dashboard/
+│   ├── app.py           # Quart web app factory
+│   ├── auth.py          # Dashboard login/session auth
+│   ├── api.py           # REST API endpoints
+│   └── templates/
+│       └── index.html   # Dashboard frontend (single-page app)
+└── tests/               # Test suite (pytest)
+    ├── conftest.py
+    ├── test_background_trolls.py
+    ├── test_config.py
+    ├── test_dead_chat.py
+    ├── test_events.py
+    ├── test_helpers.py
+    ├── test_messages.py
+    ├── test_modmail.py
+    ├── test_on_message.py
+    └── test_structure.py
 ```
 
 ## Dashboard
